@@ -29,11 +29,12 @@ jobs:
         run: |
           mkdir -p extracted
           unzip -o CollageMakerAndroid_Source_v2.zip -d extracted
-          echo "Project files:"
-          find extracted -name settings.gradle.kts -o -name settings.gradle
+          find extracted -type f \( -name settings.gradle.kts -o -name settings.gradle \)
 
-      - name: Set up Gradle
+      - name: Install Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
 
       - name: Build debug APK
         shell: bash
@@ -41,20 +42,13 @@ jobs:
           PROJECT_FILE="$(find extracted -type f \( -name settings.gradle.kts -o -name settings.gradle \) -print -quit)"
 
           if [ -z "$PROJECT_FILE" ]; then
-            echo "ERROR: Gradle settings file not found in ZIP."
+            echo "ERROR: Gradle settings file not found."
             exit 1
           fi
 
           PROJECT_DIR="$(dirname "$PROJECT_FILE")"
           cd "$PROJECT_DIR"
-
-          if [ -f ./gradlew ]; then
-            chmod +x ./gradlew
-            ./gradlew assembleDebug
-          else
-            echo "ERROR: Gradle wrapper (gradlew) is missing."
-            exit 1
-          fi
+          gradle assembleDebug
 
       - name: Upload debug APK
         if: success()
